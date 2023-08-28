@@ -35,11 +35,12 @@ class DividerExampleForm extends Component {
     super(props, context);
     this.state = {
       genderDropdown: "Male", 
-      updatedData: {...props.data, "Fees Options": "", "Fees Amount": 0},
+      updatedData: {...props.data, "Fees Options": "", "Fees Amount": 0, "comments": props.data && props.data.comments? props.data.comments: ""},
       open: false
     }
     this.closePopup = this.closePopup.bind(this);
     this.submitPopup = this.submitPopup.bind(this);
+    this.deteteSubmitPopup = this.deteteSubmitPopup.bind(this);
   }
   handleOpen = () => {
     this.setState({open: true});
@@ -53,7 +54,7 @@ class DividerExampleForm extends Component {
     this.handleClose()
   }
   submitPopup = () =>{
-    this.props.addNewUser(this.state.updatedData);
+    this.props.addNewUser(this.state.updatedData, false);
     this.handleClose();
   }
   handleChange (key, value) {
@@ -61,9 +62,19 @@ class DividerExampleForm extends Component {
     cloneUpdatedData[key]=value;
     this.setState({updatedData: cloneUpdatedData})
   }
+
+  deteteSubmitPopup = () =>{
+    this.props.addNewUser(this.state.updatedData, true);
+    this.handleClose();
+  }
   
   render() {
     const actions = [
+      <FlatButton
+        label="Delete"
+        primary={true}
+        onClick={this.deteteSubmitPopup}
+      />,
       <FlatButton
         label="Cancel"
         primary={true}
@@ -200,7 +211,7 @@ class MainSection extends Component {
       this.props.actions.clearCompleted();
     }
   }
-  addNewUser(newUserData) {
+  addNewUser(newUserData, deleteFlag) {
     let cloneTableData = [...this.state.TABLE_DATA]
     if (!newUserData["Reg No:"]){
       newUserData["Reg No:"] = this.updateRegNo + 1;
@@ -208,11 +219,12 @@ class MainSection extends Component {
     }
     else {
       let index = cloneTableData.findIndex((data) => data["Reg No:"] === newUserData["Reg No:"]);
-      cloneTableData[index] = newUserData;
+      if(!deleteFlag)cloneTableData[index] = newUserData;
+      else  cloneTableData = cloneTableData.filter((val, indexNo)=>index!==indexNo);
     }
     fetch("http://localhost:3000/", {
       method: "POST",
-      body: JSON.stringify(newUserData),
+      body: JSON.stringify({newUserData, deleteFlag}),
       headers: {
         "Content-type": "application/json; charset=UTF-8"
       }
@@ -335,7 +347,7 @@ class MainSection extends Component {
                         {row[TableDatekey]}
                       </ListItem>
                       </List></TableRowColumn>;
-                    else return <TableRowColumn key={index}>{row[TableDatekey]}</TableRowColumn>;
+                    else return <TableRowColumn title={row[TableDatekey]} key={index}>{row[TableDatekey]}</TableRowColumn>;
                   }
                   )}
                 </TableRow>

@@ -11,13 +11,18 @@ app.use(express.json());
 app.use(cors())
 
 app.post('/', function (req, res) {
-    let newUserData = req.body
-    let index = file.findIndex((data) => data["Reg No:"] === newUserData["Reg No:"]);
+    let { newUserData, deleteFlag} = req.body;
+    let cloneTableData = [...file];
+    let index = cloneTableData.findIndex((data) => data["Reg No:"] === newUserData["Reg No:"]);
+    console.log("before delet Length",cloneTableData.length )
     if (index != -1)
-        file[index] = newUserData;
-    else
-        file.push(newUserData)
-    fs.writeFile(fileName, JSON.stringify(file), function writeJSON(err) {
+        if (!deleteFlag) cloneTableData[index] = newUserData;
+        else cloneTableData = cloneTableData.filter((val, indexNo) => indexNo !== index);
+    else {
+        cloneTableData.push(newUserData)
+    }
+    console.log("After delete Length",cloneTableData.length )
+    fs.writeFile(fileName, JSON.stringify(cloneTableData), function writeJSON(err) {
         if (err) return console.log(err);
         // console.log(JSON.stringify(file));
         console.log('writing to ' + fileName);
@@ -27,7 +32,11 @@ app.post('/', function (req, res) {
 })
 
 app.get('/list', (req, res) => {
-    res.send(JSON.stringify(file));
+    fs.readFile(fileName, 'utf8', function(err, data){
+        if (err) return console.log(err);
+        res.send(data);
+        console.log(data);
+    });
   })
 
 app.post('/backup', (req, res) => {
