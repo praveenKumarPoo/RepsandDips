@@ -17,6 +17,8 @@ import ContentAdd from 'material-ui/svg-icons/content/add'
 import ActionGrade from 'material-ui/svg-icons/action/grade';
 import FontIcon from 'material-ui/FontIcon';
 import MapsPersonPin from 'material-ui/svg-icons/maps/person-pin';
+import ActionHome from 'material-ui/svg-icons/action/home';
+import HardwareVideogameAsset from 'material-ui/svg-icons/hardware/videogame-asset';
 
 const defaultStyle = {
   marginLeft: 20
@@ -35,7 +37,7 @@ class DividerExampleForm extends Component {
     super(props, context);
     this.state = {
       genderDropdown: "Male", 
-      updatedData: {...props.data, "Fees Options": "", "Fees Amount": 0, "comments": props.data && props.data.comments? props.data.comments: ""},
+      updatedData: {"DUE DATE": new Date(),...props.data, "Fees Options": "", "Fees Amount": 0, "comments": props.data && props.data.comments? props.data.comments: ""},
       open: false
     }
     this.closePopup = this.closePopup.bind(this);
@@ -191,19 +193,54 @@ class MainSection extends Component {
       height: '300px',
       selectedIndex: '',
       TABLE_DATA: [],
+      checkinTable: [],
       addNewSection: false,
-      drawerOpen: false
+      drawerOpen: false,
+      drawerOpenFlag: "",
+      showAttendance: false,
+      resgistationNo:0,
+      LastCheckInPerson:{},
+      overAllData: [],
+      showCheckInDetail : false,
+      fromDrawer: false
     };
     this.closeAddUser = this.closeAddUser.bind(this);
     this.addNewUser = this.addNewUser.bind(this);
     this.updateRegNo = 0;
     this.notpaidCustomer = [];
+    this.inactiveCustomer = [];
   }
-  componentDidMount(){
+  updateOverallList(){
     fetch("http://localhost:3000/list").then((response) => response.json()).then((data)=>{
       console.log(data);
-      this.setState({TABLE_DATA: data});
+      let CloneData = [...data];
+      CloneData.forEach((row, index)=>{
+        this.updateRegNo = Math.max(this.updateRegNo, row["Reg No:"])
+        const date1 = new Date(row["DUE DATE"]);
+        const date2 = new Date();
+        const diffTime = Math.abs(date2 - date1);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const rowColor = isNaN(date2 - date1) ? "#f0f0b7" : (date2 - date1) > 0 ? "#f47979" : "#2afc0094";
+        CloneData[index] = {
+          ...CloneData[index],
+          expiredDays: diffDays,
+          rowColor,
+          inValidList: rowColor === "#f0f0b7"
+        }
+        if(rowColor === "#f47979") {
+          this.notpaidCustomer.push(row);
+        };
+        if(rowColor === "#f0f0b7") {
+          this.inactiveCustomer.push(row);
+        };
+      });
+      let overAllData = [...CloneData];
+      CloneData = CloneData.filter(({ inValidList }) => !inValidList);
+      this.setState({TABLE_DATA: CloneData, overAllData });
     })
+  }
+  componentDidMount(){
+    this.updateOverallList();
   }
   handleClearCompleted() {
     const atLeastOneCompleted = this.props.todos.some(todo => todo.completed);
@@ -228,6 +265,8 @@ class MainSection extends Component {
       headers: {
         "Content-type": "application/json; charset=UTF-8"
       }
+    }).then(()=>{
+      this.updateOverallList();
     });
     this.setState({
       addNewSection: false,
@@ -237,65 +276,198 @@ class MainSection extends Component {
   }
   closeAddUser () {
     this.setState({ addNewSection: false,
-      selectedIndex: '' });
+      selectedIndex: '', showAttendance: false, drawerOpen: false });
   }
 
   render() {
     const { todos, actions } = this.props;
-    const { filter, addNewSection } = this.state;
+    const { filter, addNewSection, showAttendance, fromDrawer } = this.state;
     const keysForTable = Object.keys(TABLE_DATA[0]).filter((value)=>value!=="months");
-    this.notpaidCustomer = [];
+    const {NAME="", lastCheckInTime="", rowColor="", expiredDays="", monthlyAttendance="" } =this.state.LastCheckInPerson;
     return (
       <section className="main" style={defaultStyle}>
         <Tabs>
           <Tab
-            icon={<FontIcon className="material-icons">Full List</FontIcon>}
+            icon={<ActionHome />}
             label="Main List"
             onActive={(value)=>{
               this.closeAddUser();
             }}
           />
           <Tab
-            icon={<FontIcon className="material-icons">UnPaid List</FontIcon>}
+            icon={<HardwareVideogameAsset />}
             label="unpaid"
             onActive={(value)=>{
-              this.setState({ drawerOpen: true, addNewSection: false });
+              this.setState({
+                drawerOpen: true,
+                addNewSection: false,
+                showAttendance: false,
+                drawerOpenFlag: "unpaid"
+              });
             }}
           />
           <Tab
             icon={<MapsPersonPin />}
             label="Add New Joining"
             onActive={(value)=>{
-              this.setState({ addNewSection: true });
+              this.setState({ addNewSection: true,
+                showAttendance: false,
+                drawerOpen: false
+               });
+            }}
+          />
+           <Tab
+            icon={<MapsPersonPin />}
+            label="InActive Users"
+            onActive={(value)=>{
+              this.setState({ showAttendance: false,
+                drawerOpen: true,
+                addNewSection: false,
+                drawerOpenFlag: "inactive" })
+            }}
+          />
+          <Tab
+            icon={<MapsPersonPin />}
+            label="Attendence"
+            onActive={(value)=>{
+              fetch("http://localhost:3000/checkinlist").then((response) => response.json()).then((data) => {
+                this.setState({ checkinTable: data });
+              });
+              this.setState({ drawerOpen: false, addNewSection: false, showAttendance: true })
             }}
           />
         </Tabs>
-        {/* <FloatingActionButton style={style} onClick={() => {
-          this.setState({ addNewSection: true });
-        }}>
-          <ContentAdd />
-        </FloatingActionButton> */}
-        {/* <div>
-          <RaisedButton
-            label="Unpaid Clients"
-            onClick={() => {
-              this.setState({ drawerOpen: true });
-            }}
-            style={style}
-          />
-        </div> */}
-        {addNewSection && <DividerExampleForm data={ADDNEWUSER} closeAddUser={this.closeAddUser} addNewUser={this.addNewUser} />}
-        {!addNewSection && this.state.selectedIndex !== "" &&
-          <DividerExampleForm data={this.state.TABLE_DATA[this.state.selectedIndex]} closeAddUser={this.closeAddUser} addNewUser={this.addNewUser}/>
+        {!addNewSection && showAttendance &&
+          <div>
+            <TextField
+              hintText="Registation  ID"
+              floatingLabelText="Registation  ID"
+              value={this.state.resgistationNo}
+              onChange={(event, value)=>{
+                this.setState({resgistationNo: value});
+              }}
+            />
+            <FlatButton
+              type='submit'
+              label="Check In"
+              primary={true}
+              onClick={()=>{
+                let cloneTableData = [...this.state.TABLE_DATA];
+                let index = cloneTableData.findIndex((data) => data["Reg No:"].toString() === this.state.resgistationNo.toString());
+                if (index!== -1){
+                  cloneTableData[index]["lastCheckInTime"] = new Date().toLocaleString();
+                  cloneTableData[index]["monthlyAttendance"][new Date().getMonth()] = cloneTableData[index]["monthlyAttendance"][new Date().getMonth()]+1;
+                  fetch("http://localhost:3000/checkin", {
+                    method: "POST",
+                    body: JSON.stringify({newUserData: cloneTableData[index]}),
+                    headers: {
+                      "Content-type": "application/json; charset=UTF-8"
+                    }
+                  }).then(()=>{
+                    fetch("http://localhost:3000/checkinlist").then((response) => response.json()).then((data)=>{
+                      this.setState({checkinTable: data});
+                  });
+                  });
+                  this.setState({LastCheckInPerson: cloneTableData[index], showCheckInDetail: true});
+                }else 
+                alert (this.state.resgistationNo + "No such user")
+              }}
+            />
+            <Table
+              height={this.state.height}
+              fixedHeader={this.state.fixedHeader}
+              fixedFooter={this.state.fixedFooter}
+              selectable={this.state.selectable}
+              multiSelectable={this.state.multiSelectable}
+              onRowSelection={(val, dataValue) => {
+                if (val.length > 0) this.setState({ selectedIndex: val[0] })
+              }}
+            >
+              <TableHeader
+                displaySelectAll={this.state.showCheckboxes}
+                adjustForCheckbox={this.state.showCheckboxes}
+                enableSelectAll={this.state.enableSelectAll}
+                style={{ background: "#353131" }}
+              >
+                <TableRow>
+                  {["Reg No:", "DUE DATE", "Last CheckIn DateTime",  "Current Month Attendence"].map((headerlabel) => <TableHeaderColumn tooltip={headerlabel}>{headerlabel}</TableHeaderColumn>)}
+                </TableRow>
+              </TableHeader>
+              <TableBody
+                displayRowCheckbox={this.state.showCheckboxes}
+                deselectOnClickaway={this.state.deselectOnClickaway}
+                showRowHover={this.state.showRowHover}
+                stripedRows={this.state.stripedRows}
+              >
+                {this.state.checkinTable.map((row, index) => {
+                  return (
+                    <TableRow key={index} style={{ backgroundColor: row["rowColor"] }}>
+                      {["Reg No:", "DUE DATE", "lastCheckInTime", "monthlyAttendance"].map((TableDatekey, index) => {
+                        if ("DUE DATE" === TableDatekey && row["DUE DATE"]) return <TableRowColumn key={index}><DatePicker value={new Date(row["DUE DATE"])}
+                          onChange={
+                            (noValue, selectedDate) => {
+                              let newClone = [...this.state.TABLE_DATA];
+                              newClone[this.state.selectedIndex]["DUE DATE"] = selectedDate
+                              this.setState({ TABLE_DATA: newClone })
+                            }
+                          } /></TableRowColumn>
+                        else if ("Reg No:" === TableDatekey) return <TableRowColumn key={index}>
+                          <List>
+                            <ListItem
+                              disabled={true}
+                              leftAvatar={
+                                <Avatar src="images/1.png" />
+                              }
+                            >
+                              {row[TableDatekey]}
+                            </ListItem>
+                          </List></TableRowColumn>;
+                        else if ("monthlyAttendance" === TableDatekey) return <TableRowColumn title={row[TableDatekey]} key={index}>{`${row[TableDatekey][new Date().getMonth()]}/${new Date().getDate()}`}</TableRowColumn>;
+                        else return <TableRowColumn title={row[TableDatekey]} key={index}>{row[TableDatekey]}</TableRowColumn>;
+                      }
+                      )}
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>}
+        <Dialog
+          title="Reps & Dips Check In"
+          contentStyle={{
+            width: "100%", height: "100%",
+            maxWidth: 'none', maxHeight: 'none'
+          }}
+          autoDetectWindowHeight={false}
+          actions={[<FlatButton
+            label="Cancel"
+            primary={true}
+            onClick={() => this.setState({ showCheckInDetail: false })}
+          />]}
+          modal={false}
+          open={this.state.showCheckInDetail}
+          onRequestClose={() => this.setState({ showCheckInDetail: false })}
+          autoScrollBodyContent={true}
+        >
+            <h1>{`Welcome ${this.state.LastCheckInPerson['NAME']}`}</h1>
+            <h2>{`CheckIn Time ${this.state.LastCheckInPerson['lastCheckInTime']}`}</h2>
+            {this.state.LastCheckInPerson['rowColor'] === "#f47979" ? <h3 style={{backgroundColor: rowColor, padding: "10px"}}>{`Your ${this.state.LastCheckInPerson['Typeof pack']} Package expired since ${expiredDays} Days, last paid date -->${new Date(this.state.LastCheckInPerson['DUE DATE']).toDateString()}`}</h3> : 
+            <h1 style={{backgroundColor: rowColor, padding: "10px"}}>{`Your ${this.state.LastCheckInPerson['Typeof pack']} Package going to expire in ${this.state.LastCheckInPerson['expiredDays']} Days, Due Date -->${new Date(this.state.LastCheckInPerson['DUE DATE']).toDateString()}`}</h1>}
+            <h2>{`Current Month Attendence in days--> ${monthlyAttendance[new Date().getMonth()]}/${new Date().getDate()}`}</h2>
+            <h2>{`Current Month Attendence in % --> ${Math.ceil((monthlyAttendance[new Date().getMonth()]/new Date().getDate())*100)}%`}</h2>
+        </Dialog>
+        {addNewSection && !showAttendance && <DividerExampleForm data={ADDNEWUSER} closeAddUser={this.closeAddUser} addNewUser={this.addNewUser} />}
+        {!addNewSection && !showAttendance && this.state.selectedIndex !== "" &&
+          <DividerExampleForm data={(!fromDrawer ? this.state.TABLE_DATA: this.state.overAllData )[this.state.selectedIndex]} closeAddUser={this.closeAddUser} addNewUser={this.addNewUser}/>
         }
-        {!addNewSection && <Table
+        {!addNewSection && !showAttendance &&  <Table
           height={this.state.height}
           fixedHeader={this.state.fixedHeader}
           fixedFooter={this.state.fixedFooter}
           selectable={this.state.selectable}
           multiSelectable={this.state.multiSelectable}
           onRowSelection={(val, dataValue) => {
-            if (val.length > 0) this.setState({ selectedIndex: val[0] })
+            if (val.length > 0) this.setState({ selectedIndex: val[0], fromDrawer: false })
           }}
         >
           <TableHeader
@@ -315,18 +487,8 @@ class MainSection extends Component {
             stripedRows={this.state.stripedRows}
           >
             {this.state.TABLE_DATA.map((row, index) => {
-              this.updateRegNo = Math.max(this.updateRegNo, row["Reg No:"])
-              const date1 = new Date(row["DUE DATE"]);
-              const date2 = new Date();
-              const diffTime = Math.abs(date2 - date1);
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              const rowColor = isNaN(date2 - date1) ? "#f0f0b7" : (date2 - date1) > 0 ? "#f47979" : "#40f040";
-              if(rowColor === "#f47979") {
-                let newRowwithExpiredDate = {...row, expiredDays: diffDays }
-                this.notpaidCustomer.push(newRowwithExpiredDate);
-              };
               return (
-                <TableRow key={index} style={{ backgroundColor: rowColor }}>
+                <TableRow key={index} style={{ backgroundColor: row["rowColor"] }}>
                   {keysForTable.map((TableDatekey, index) => {
                     if ("DUE DATE" === TableDatekey && row["DUE DATE"]) return <TableRowColumn key={index}><DatePicker value={new Date(row["DUE DATE"])}
                       onChange={
@@ -375,14 +537,19 @@ class MainSection extends Component {
           onRequestChange={(drawerOpen) => this.setState({ drawerOpen })}
           open={this.state.drawerOpen}>
           <List>
-            {this.notpaidCustomer.map((row, index) => <ListItem
+            {(this.state.drawerOpenFlag === "inactive"? this.inactiveCustomer:this.notpaidCustomer).map((row, index) => <ListItem
               disabled={true}
               key={index}
-              style={{background: "#f47979"}}
+              style={{background: this.state.drawerOpenFlag === "inactive"? "#f0f0b7": "#f47979"}}
               title={`expired in days: ${row["expiredDays"]}, Due Date || ${new Date(row["DUE DATE"])}`}
               leftAvatar={
                 <Avatar src="images/1.png" />
               }
+              onClick={(val) => {
+                let cloneTableData = [...this.state.overAllData];
+                let index = cloneTableData.findIndex((data) => data["Reg No:"].toString() === row["Reg No:"].toString());
+                this.setState({ selectedIndex: index, drawerOpen: false, fromDrawer: true})
+              }}
             >
               Reg No-{row["Reg No:"]} || {row["NAME"]} || expired in days: {row["expiredDays"]}, Due Date || { row["DUE DATE"] && new Date(row["DUE DATE"]).toDateString()}`
             </ListItem>)

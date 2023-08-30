@@ -14,15 +14,15 @@ export const ADDNEWUSER = {
 export const RATES = {
     Gendral: {
         1: 800,
-        3: 2000,
-        6: 4000,
-        12: 6500
+        3: 2200,
+        6: 3999,
+        12: 7999
     },
     Cardio: {
         1: 1000,
-        3: 2200,
-        6: 4400,
-        12: 7500
+        3: 2700,
+        6: 4999,
+        12: 8999
     }
 }
 export const TABLE_DATA = [
