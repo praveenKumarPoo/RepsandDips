@@ -225,7 +225,7 @@ class MainSection extends Component {
         const date2 = new Date();
         const diffTime = Math.abs(date2 - date1);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const rowColor = isNaN(date2 - date1) || (date2 - date1 > 0 && diffDays > 60) ? "#f0f0b7" : (date2 - date1) > 0 ? "#f47979" : "#2afc0094";
+        const rowColor = isNaN(date2 - date1) || (date2 - date1 > 0 && diffDays > 90) ? "#f0f0b7" : (date2 - date1) > 0 ? "#f47979" : "#2afc0094";
         CloneData[index] = {
           ...CloneData[index],
           expiredDays: diffDays,
@@ -287,7 +287,7 @@ class MainSection extends Component {
   render() {
     const { todos, actions } = this.props;
     const { filter, addNewSection, showAttendance, fromDrawer } = this.state;
-    const keysForTable = Object.keys(TABLE_DATA[0]).filter((value)=>value!=="months");
+    const keysForTable = Object.keys(TABLE_DATA[0]).filter((value)=>value!=="months" && value!=="FATHER");
     const {NAME="", lastCheckInTime="", rowColor="", expiredDays="", monthlyAttendance="" } =this.state.LastCheckInPerson;
     return (
       <section className="main" style={defaultStyle}>
@@ -402,7 +402,7 @@ class MainSection extends Component {
                 style={{ background: "#353131" }}
               >
                 <TableRow>
-                  {["Reg No:", "DUE DATE", "Last CheckIn DateTime",  "Current Month Attendence"].map((headerlabel) => <TableHeaderColumn tooltip={headerlabel}>{headerlabel}</TableHeaderColumn>)}
+                  {["Reg No:","Name" ,"DUE DATE", "Last CheckIn DateTime",  "Current Month Attendence"].map((headerlabel) => <TableHeaderColumn tooltip={headerlabel}>{headerlabel}</TableHeaderColumn>)}
                 </TableRow>
               </TableHeader>
               <TableBody
@@ -414,7 +414,7 @@ class MainSection extends Component {
                 {this.state.checkinTable.map((row, index) => {
                   return (
                     <TableRow key={index} style={{ backgroundColor: row["rowColor"] }}>
-                      {["Reg No:", "DUE DATE", "lastCheckInTime", "monthlyAttendance"].map((TableDatekey, index) => {
+                      {["Reg No:","NAME", "DUE DATE", "lastCheckInTime", "monthlyAttendance"].map((TableDatekey, index) => {
                         if ("DUE DATE" === TableDatekey && row["DUE DATE"]) return <TableRowColumn key={index}><DatePicker value={new Date(row["DUE DATE"])}
                           onChange={
                             (noValue, selectedDate) => {
@@ -428,7 +428,7 @@ class MainSection extends Component {
                             <ListItem
                               disabled={true}
                               leftAvatar={
-                                <Avatar src="images/1.png" />
+                                <Avatar src="images/1.jpg" />
                               }
                             >
                               {row[TableDatekey]}
