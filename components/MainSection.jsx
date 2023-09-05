@@ -306,10 +306,10 @@ class MainSection extends Component {
       }).then(()=>{
         fetch("http://localhost:3000/checkinlist").then((response) => response.json()).then((data) => {
           const compare = (a, b) => {
-            if (new Date(a.lastCheckInTime) < new Date(b.lastCheckInTime)) {
+            if (new Date(a.lastCheckInTime).valueOf() < new Date(b.lastCheckInTime).valueOf()) {
               return -1;
             }
-            if (new Date(a.lastCheckInTime) > new Date(b.lastCheckInTime)) {
+            if (new Date(a.lastCheckInTime).valueOf() > new Date(b.lastCheckInTime).valueOf()) {
               return 1;
             }
             return 0;
