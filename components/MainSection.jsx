@@ -305,14 +305,8 @@ class MainSection extends Component {
         }
       }).then(()=>{
         fetch("http://localhost:3000/checkinlist").then((response) => response.json()).then((data) => {
-          const compare = (a, b) => {
-            if (new Date(a.lastCheckInTime).valueOf() < new Date(b.lastCheckInTime).valueOf()) {
-              return -1;
-            }
-            if (new Date(a.lastCheckInTime).valueOf() > new Date(b.lastCheckInTime).valueOf()) {
-              return 1;
-            }
-            return 0;
+           const compare = (a, b) => {
+            return (new Date(a.lastCheckInTime) - new Date(b.lastCheckInTime));
           }
           this.setState({ checkinTable: data.sort(compare).reverse() });
         });
@@ -379,7 +373,10 @@ class MainSection extends Component {
             label="Attendence"
             onActive={(value)=>{
               fetch("http://localhost:3000/checkinlist").then((response) => response.json()).then((data) => {
-                this.setState({ checkinTable: data });
+                const compare = (a, b) => {
+                  return (new Date(a.lastCheckInTime) - new Date(b.lastCheckInTime));
+                }
+                this.setState({ checkinTable: data.sort(compare).reverse() });
               });
               this.setState({ drawerOpen: false, addNewSection: false, showAttendance: true })
             }}
@@ -417,7 +414,13 @@ class MainSection extends Component {
               selectable={this.state.selectable}
               multiSelectable={this.state.multiSelectable}
               onRowSelection={(val, dataValue) => {
-                if (val.length > 0) this.setState({ selectedIndex: val[0] })
+                if (val.length > 0) {
+                  let row = this.state.checkinTable[val[0]]
+                  let cloneTableData = [...this.state.overAllData];
+                  let index = cloneTableData.findIndex((data) => data["Reg No:"].toString() === row["Reg No:"].toString());
+                  this.setState({ selectedIndex: index, addNewSection: false, showAttendance: false, fromDrawer: true });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
               }}
             >
               <TableHeader
