@@ -308,7 +308,8 @@ class MainSection extends Component {
            const compare = (a, b) => {
             return (new Date(a.lastCheckInTime) - new Date(b.lastCheckInTime));
           }
-          this.setState({ checkinTable: data.sort(compare).reverse() });
+          const newDatalist = data.filter((objData)=> new Date(objData.lastCheckInTime).toLocaleDateString() == new Date().toLocaleDateString())
+          this.setState({ checkinTable: newDatalist.sort(compare).reverse() });
         });
       });
       this.setState({LastCheckInPerson: cloneTableData[index], showCheckInDetail: true});
@@ -376,7 +377,8 @@ class MainSection extends Component {
                 const compare = (a, b) => {
                   return (new Date(a.lastCheckInTime) - new Date(b.lastCheckInTime));
                 }
-                this.setState({ checkinTable: data.sort(compare).reverse() });
+                const newDatalist = data.filter((objData)=> new Date(objData.lastCheckInTime).toLocaleDateString() == new Date().toLocaleDateString())
+                this.setState({ checkinTable: newDatalist.sort(compare).reverse() });
               });
               this.setState({ drawerOpen: false, addNewSection: false, showAttendance: true })
             }}
