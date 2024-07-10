@@ -244,6 +244,7 @@ class MainSection extends Component {
       });
       let overAllData = [...CloneData];
       CloneData = CloneData.filter(({ inValidList }) => !inValidList);
+      console.log(CloneData)
       this.setState({TABLE_DATA: CloneData, overAllData });
     })
   }
@@ -308,7 +309,7 @@ class MainSection extends Component {
            const compare = (a, b) => {
             return (new Date(a.lastCheckInTime) - new Date(b.lastCheckInTime));
           }
-          const newDatalist = data.filter((objData)=> new Date(objData.lastCheckInTime).toLocaleDateString() == new Date().toLocaleDateString())
+          const newDatalist = data.filter((objData)=> new Date(objData.lastCheckInTime).toLocaleDateString() === new Date().toLocaleDateString())
           this.setState({ checkinTable: newDatalist.sort(compare).reverse() });
         });
       });
@@ -377,7 +378,7 @@ class MainSection extends Component {
                 const compare = (a, b) => {
                   return (new Date(a.lastCheckInTime) - new Date(b.lastCheckInTime));
                 }
-                const newDatalist = data.filter((objData)=> new Date(objData.lastCheckInTime).toLocaleDateString() == new Date().toLocaleDateString())
+                const newDatalist = data.filter((objData)=> new Date(objData.lastCheckInTime).toLocaleDateString() === new Date().toLocaleDateString())
                 this.setState({ checkinTable: newDatalist.sort(compare).reverse() });
               });
               this.setState({ drawerOpen: false, addNewSection: false, showAttendance: true })
