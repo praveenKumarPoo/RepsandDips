@@ -19,7 +19,9 @@ import FontIcon from 'material-ui/FontIcon';
 import MapsPersonPin from 'material-ui/svg-icons/maps/person-pin';
 import ActionHome from 'material-ui/svg-icons/action/home';
 import HardwareVideogameAsset from 'material-ui/svg-icons/hardware/videogame-asset';
-const baseUrl = `https://chipper-toffee-e75e3f.netlify.app/.netlify/functions/api`
+let baseUrl = `https://chipper-toffee-e75e3f.netlify.app/.netlify/functions/api`
+let localUrl = `http://localhost:8888/.netlify/functions/api`;
+//baseUrl = localUrl;
 
 const defaultStyle = {
   marginLeft: 20
@@ -197,7 +199,7 @@ class MainSection extends Component {
       enableSelectAll: false,
       deselectOnClickaway: true,
       showCheckboxes: true,
-      height: '300px',
+      height: '750px',
       selectedIndex: '',
       TABLE_DATA: [],
       checkinTable: [],
@@ -224,7 +226,7 @@ class MainSection extends Component {
       console.log(data);
       let CloneData = [...data];
       CloneData.forEach((row, index)=>{
-        this.updateRegNo = Math.max(this.updateRegNo, row["Reg No:"])
+        this.updateRegNo = Math.max(this.updateRegNo, row["Reg No:"] || 0)
         const date1 = new Date(row["DUE DATE"]);
         const date2 = new Date();
         const diffTime = Math.abs(date2 - date1);
@@ -263,7 +265,21 @@ class MainSection extends Component {
     newUserData["lastUpdateDateTime"] = new Date().toLocaleString();
     if (!newUserData["Reg No:"]){
       newUserData["Reg No:"] = this.updateRegNo + 1;
-      cloneTableData.push(newUser,Data);
+      newUserData['monthlyAttendance'] = {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0,
+        "10": 0,
+        "11": 0
+    };
+      cloneTableData.push(newUserData);
     }
     else {
       let index = cloneTableData.findIndex((data) => data["Reg No:"] === newUserData["Reg No:"]);
@@ -310,7 +326,7 @@ class MainSection extends Component {
            const compare = (a, b) => {
             return (new Date(a.lastCheckInTime) - new Date(b.lastCheckInTime));
           }
-          const newDatalist = data.filter((objData)=> new Date(objData.lastCheckInTime).toLocaleDateString() === new Date().toLocaleDateString())
+          const newDatalist = data.filter((objData)=> (objData.lastCheckInTime && objData.lastCheckInTime.split(',')[0] === new Date().toLocaleDateString()))
           this.setState({ checkinTable: newDatalist.sort(compare).reverse() });
         });
       });
