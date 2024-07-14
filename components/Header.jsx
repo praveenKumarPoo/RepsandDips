@@ -17,7 +17,7 @@ class Header extends Component {
   render() {
     return (
       <header className="header">
-          <AppBar title="Reps & Dips" style={{backgroundColor: "#c6d400"}}/>
+          <AppBar title="Reps & Dips" style={{backgroundColor: "#004d40"}}/>
       </header>
     );
   }
