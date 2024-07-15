@@ -20,7 +20,7 @@ import MapsPersonPin from 'material-ui/svg-icons/maps/person-pin';
 import ActionHome from 'material-ui/svg-icons/action/home';
 import HardwareVideogameAsset from 'material-ui/svg-icons/hardware/videogame-asset';
 import { blue300, indigo900 } from 'material-ui/styles/colors';
-import { formatDistance } from "date-fns";
+import { formatDistance, differenceInDays, add, getUnixTime } from "date-fns";
 import { red500 } from 'material-ui/styles/colors';
 
 let baseUrl = `https://chipper-toffee-e75e3f.netlify.app/.netlify/functions/api`
@@ -118,7 +118,7 @@ class DividerExampleForm extends Component {
       />
     ];
     // style={{background: "#babe8b"}}
-    const filterOnUpdate = ["months", "inValidList", "rowColor", "EMPTY", "monthlyAttendance", "expiredDays"]
+    const filterOnUpdate = ["months", "inValidList", "rowColor", "EMPTY", "monthlyAttendance", "expiredDays", "id_"]
     const keysForTable = Object.keys(this.state.updatedData).filter((value) => !filterOnUpdate.includes(value) && value.indexOf("EMPTY") === -1);
     return (
       <Paper zDepth={5}>
@@ -129,7 +129,7 @@ class DividerExampleForm extends Component {
               style={style}
               onChange={
                 (noValue, selectedDate) => {
-                  this.handleChange(key, selectedDate)
+                  this.handleChange(key, selectedDate.valueOf())
                 }
               }
             />
@@ -155,7 +155,7 @@ class DividerExampleForm extends Component {
               let dt = this.props.data["DUE DATE"] ? new Date(this.props.data["DUE DATE"]) : new Date();
               let newDate = dt.setDate(dt.getDate() + (value * 30));
               let cloneUpdatedData = { ...this.state.updatedData }
-              cloneUpdatedData["DUE DATE"] = newDate;
+              cloneUpdatedData["DUE DATE"] = newDate.valueOf();
               cloneUpdatedData["Typeof pack"] = cloneUpdatedData["Typeof pack"] ? cloneUpdatedData["Typeof pack"] : 'Gendral';
               cloneUpdatedData["Fees Amount"] = RATES[cloneUpdatedData["Typeof pack"]][value];
               cloneUpdatedData[key] = value;
@@ -247,16 +247,27 @@ class MainSection extends Component {
     fetch(`${baseUrl}/list`).then((response) => response.json()).then((data) => {
       console.log(data);
       let CloneData = [...data];
+      console.log("fullData-->", CloneData)
+      console.log("fullData", CloneData.map((rowD)=>rowD["DUE DATE"]))
       CloneData.forEach((row, index) => {
         this.updateRegNo = Math.max(this.updateRegNo, row["Reg No:"] || 0)
-        const date1 = new Date(row["DUE DATE"]);
+        let date1 = new Date(row["DUE DATE"]) 
+        if (!row["DUE DATE"]) {
+          row["DUE DATE"] = add(new Date(row["lastUpdateDateTime"]), {
+            months: row["Fees Options"]
+          }).valueOf();
+          date1 = new Date(row["DUE DATE"])
+        }
         const date2 = new Date();
-        const diffTime = Math.abs(date2 - date1);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const rowColor = isNaN(date2 - date1) || (date2 - date1 > 0 && diffDays > 90) ? "#f0f0b7" : (date2 - date1) > 0 ? "#f47979" : "#2afc0094";
+        const daysDiff = differenceInDays(
+          new Date(date1),
+          new Date(date2)
+        )
+        const rowColor = isNaN(daysDiff) || daysDiff < -90 ?  "#f0f0b7" : (daysDiff >= -90 && daysDiff <= 0) ?  "#f47979" : "#2afc0094";
+        //const rowColor = isNaN(date2 - date1) || (date2 - date1 > 0 && diffDays > 90) ? "#f0f0b7" : (date2 - date1) > 0 ? "#f47979" : "#2afc0094";
         CloneData[index] = {
           ...CloneData[index],
-          expiredDays: diffDays,
+          expiredDays: Math.abs(daysDiff),
           rowColor,
           inValidList: rowColor === "#f0f0b7"
         }
@@ -269,7 +280,7 @@ class MainSection extends Component {
       });
       let overAllData = [...CloneData];
       CloneData = CloneData.filter(({ inValidList }) => !inValidList);
-      console.log(CloneData)
+      console.log(CloneData.sort((a, b) => a["Reg No:"] - b["Reg No:"]))
       this.setState({ TABLE_DATA: CloneData, overAllData });
     })
   }
@@ -334,6 +345,7 @@ class MainSection extends Component {
     let cloneTableData = [...this.state.TABLE_DATA];
     let index = cloneTableData.findIndex((data) => data["Reg No:"].toString() === this.state.resgistationNo.toString());
     if (index !== -1) {
+      cloneTableData[index]['DUE DATE'] =  new Date(cloneTableData[index]['DUE DATE']).valueOf()
       cloneTableData[index]["lastCheckInTime"] = new Date().toLocaleString();
       if (!cloneTableData[index]["monthlyAttendance"]) cloneTableData[index]["monthlyAttendance"] = { "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 32, "8": 3, "9": 0, "10": 0, "11": 0 };
       cloneTableData[index]["monthlyAttendance"][new Date().getMonth()] = cloneTableData[index]["monthlyAttendance"][new Date().getMonth()] + 1;
@@ -639,7 +651,7 @@ class MainSection extends Component {
               style={{ background: this.state.drawerOpenFlag === "inactive" ? index % 2 === 0 ? "#c2c2c2" : "#979797" : index % 2 === 0 ? "#d8fff8" : "#99fdea" }}
               title={`expired in days: ${row["expiredDays"]}, Due Date || ${new Date(row["DUE DATE"])}`}
               leftAvatar={
-                <Avatar size={36} color={"#3c3c3c"} backgroundColor={row["rowColor"] === "#f47979" ? "#ff0026" : "#00ff0c"}>
+                <Avatar size={36} color={"#3c3c3c"} backgroundColor={row["rowColor"] === "#f47979" ? "#ff0026" : row["rowColor"] === "#f0f0b7" ? row["rowColor"] : "#00ff0c"}>
                   {row["Reg No:"]}
                 </Avatar>
               }
