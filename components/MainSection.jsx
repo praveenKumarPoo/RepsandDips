@@ -20,7 +20,7 @@ import MapsPersonPin from 'material-ui/svg-icons/maps/person-pin';
 import ActionHome from 'material-ui/svg-icons/action/home';
 import HardwareVideogameAsset from 'material-ui/svg-icons/hardware/videogame-asset';
 import { blue300, indigo900 } from 'material-ui/styles/colors';
-import { formatDistance, differenceInDays, add, getUnixTime } from "date-fns";
+import { formatDistance, differenceInDays, add, getUnixTime, isValid } from "date-fns";
 import { red500 } from 'material-ui/styles/colors';
 
 let baseUrl = `https://chipper-toffee-e75e3f.netlify.app/.netlify/functions/api`
@@ -124,7 +124,7 @@ class DividerExampleForm extends Component {
       <Paper zDepth={5}>
         {keysForTable.map((key) => {
           if (key.toLowerCase().indexOf('date') !== -1)
-            return <div><DatePicker value={this.state.updatedData[key] ? new Date(this.state.updatedData[key]) : new Date()}
+            return <div><DatePicker value={this.state.updatedData[key] && isValid(this.state.updatedData[key])? new Date(this.state.updatedData[key]) : new Date()}
               floatingLabelText={key}
               style={style}
               onChange={
@@ -295,7 +295,7 @@ class MainSection extends Component {
   }
   addNewUser(newUserData, deleteFlag) {
     let cloneTableData = [...this.state.TABLE_DATA]
-    newUserData["lastUpdateDateTime"] = new Date().toLocaleString();
+    newUserData["lastUpdateDateTime"] = new Date().valueOf();
     if (!newUserData["Reg No:"]) {
       newUserData["Reg No:"] = this.updateRegNo + 1;
       newUserData['monthlyAttendance'] = {
