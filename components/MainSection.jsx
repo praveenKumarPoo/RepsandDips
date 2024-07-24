@@ -20,7 +20,7 @@ import MapsPersonPin from 'material-ui/svg-icons/maps/person-pin';
 import ActionHome from 'material-ui/svg-icons/action/home';
 import HardwareVideogameAsset from 'material-ui/svg-icons/hardware/videogame-asset';
 import { blue300, indigo900 } from 'material-ui/styles/colors';
-import { formatDistance, differenceInDays, add, getUnixTime, isValid } from "date-fns";
+import { formatDistance, differenceInDays, add, getUnixTime, isValid, format } from "date-fns";
 import { red500 } from 'material-ui/styles/colors';
 
 let baseUrl = `https://chipper-toffee-e75e3f.netlify.app/.netlify/functions/api`
@@ -602,7 +602,7 @@ class MainSection extends Component {
                 <TableRow key={index} style={{ backgroundColor: index % 2 === 0 ? "#b0bec5" : "#78909c" }}>
                   {keysForTable.map((TableDatekey, index) => {
                     if ("DUE DATE" === TableDatekey && row["DUE DATE"]) return <TableRowColumn key={index}>
-                      {formatDistance(new Date(row["DUE DATE"]), new Date(), { addSuffix: true })}
+                      {format(new Date(row["DUE DATE"]), 'MM/dd/yyyy')}
                     </TableRowColumn>
                     else if ("Reg No:" === TableDatekey) return <TableRowColumn key={index}>
                       <List>
