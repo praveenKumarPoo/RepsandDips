@@ -24,7 +24,7 @@ import { formatDistance, differenceInDays, add, getUnixTime, isValid, format } f
 import { red500 } from 'material-ui/styles/colors';
 
 let baseUrl = `https://chipper-toffee-e75e3f.netlify.app/.netlify/functions/api`
-let localUrl = `http://localhost:8888/.netlify/functions/api`;
+let localUrl = `http://localhost:9999/.netlify/functions/api`;
 //baseUrl = localUrl;
 
 const defaultStyle = {
@@ -602,7 +602,7 @@ class MainSection extends Component {
                 <TableRow key={index} style={{ backgroundColor: index % 2 === 0 ? "#b0bec5" : "#78909c" }}>
                   {keysForTable.map((TableDatekey, index) => {
                     if ("DUE DATE" === TableDatekey && row["DUE DATE"]) return <TableRowColumn key={index}>
-                      {format(new Date(row["DUE DATE"]), 'MM/dd/yyyy')}
+                      {format(new Date(row["DUE DATE"]), 'dd/MM/yyyy')}
                     </TableRowColumn>
                     else if ("Reg No:" === TableDatekey) return <TableRowColumn key={index}>
                       <List>
@@ -627,11 +627,10 @@ class MainSection extends Component {
         </Table>
         }
         <RaisedButton
-          label="Backup data"
+          label="Send SMS for defaulters"
           onClick={() => {
             fetch(`${baseUrl}/backup`, {
-              method: "POST",
-              body: JSON.stringify({ updatefileName: new Date().toDateString() }),
+              method: "get",
               headers: {
                 "Content-type": "application/json; charset=UTF-8"
               }
